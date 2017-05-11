@@ -37,6 +37,9 @@ public class WaveProgress extends View {
     /**The paint to fill the round canvas*/
     private Paint mCircleFillPaint;
 
+    /**The paint draw text*/
+    private Paint mTextPaint;
+
     /**The wave length*/
     private int mOneWaveLength = 1000;
 
@@ -44,7 +47,7 @@ public class WaveProgress extends View {
     private int mOneWaveHeight = 100;
 
     /**The wave's scrolling distance in X direction*/
-    private int mAimDx = 0;
+    private int mAnimDx = 0;
 
     /**The wave's scrolling distance in Y direction*/
     private int mAnimDY = 0;
@@ -55,10 +58,17 @@ public class WaveProgress extends View {
     /**Progress animator*/
     private ValueAnimator mProgressAnimator;
 
+    /**Duration to move one wave length*/
+    private int mWaveDuration = 1500;
+
+    /**Loading progress*/
+    private float mProgress = 0;
+
     private int mWaveColor = Color.GREEN;
     private int mFillColor = Color.WHITE;
     private int mStrokeColor = Color.GREEN;
     private int mTextColor = Color.WHITE;
+    private float mTextSize = 40;
 
     public WaveProgress(Context context) {
         super(context);
@@ -81,38 +91,97 @@ public class WaveProgress extends View {
         mWavePath = new Path();
         mCirclePath = new Path();
 
+        //init wave paint
         mWavePaint = new Paint();
         mWavePaint.setColor(mWaveColor);
         mWavePaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mWavePaint.setAntiAlias(true);
 
+        //init stroke paint
         mCircleStrokePaint = new Paint();
         mCircleStrokePaint.setColor(mStrokeColor);
         mCircleStrokePaint.setStyle(Paint.Style.STROKE);
         mCircleStrokePaint.setStrokeWidth(15);
         mWavePaint.setAntiAlias(true);
 
+        //init fill paint
         mCircleFillPaint = new Paint();
         mCircleFillPaint.setColor(mFillColor);
         mCircleFillPaint.setStyle(Paint.Style.FILL);
         mWavePaint.setAntiAlias(true);
+
+        //init text paint
+        mTextPaint = new Paint();
+        mTextPaint.setColor(mTextColor);
+        mTextPaint.setTextSize(mTextSize);
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
+        mTextPaint.setAntiAlias(true);
     }
 
     private void getAttrs(Context context, AttributeSet attrs) {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.WaveProgress);
+
         mWaveColor = ta.getColor(R.styleable.WaveProgress_waveColor, mWaveColor);
         mFillColor = ta.getColor(R.styleable.WaveProgress_fillColor, mFillColor);
         mStrokeColor = ta.getColor(R.styleable.WaveProgress_strokeColor, mStrokeColor);
         mTextColor = ta.getColor(R.styleable.WaveProgress_textColor, mTextColor);
+
+        mTextSize = sp2px(context, mTextSize);
+        mTextSize = ta.getDimension(R.styleable.WaveProgress_textSize, mTextSize);
+
         ta.recycle();
+    }
+
+    /**
+     * Change sp to px
+     */
+    private static int sp2px(Context context, float spValue) {
+        float fontScale = context.getResources().getDisplayMetrics().scaledDensity;
+        return (int) (spValue * fontScale + 0.5f);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        mWavePath.reset();
+
+        clipCanvasIntoCircle(canvas);
+        drawFill(canvas);
+        drawWave(canvas);
+        drawStroke(canvas);
+        drawText(canvas);
+        startAnim();
+    }
+
+    /**
+     * Clip the canvas into round shape
+     */
+    private void clipCanvasIntoCircle(Canvas canvas) {
         mCirclePath.reset();
-        mWavePath.moveTo(-mOneWaveLength + mAimDx, getHeight() - mAnimDY); //刚开始时，起始点为X方向往左移动一个波长
+        mCirclePath.addCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, Path.Direction.CW);
+        canvas.clipPath(mCirclePath);
+    }
+
+    /**
+     * Fill color to the circle
+     */
+    private void drawFill(Canvas canvas) {
+        //Fill the circle
+        canvas.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, mCircleFillPaint);
+    }
+
+    /**
+     * Draw the wave
+     */
+    private void drawWave(Canvas canvas) {
+        if (mProgressAnimator == null) {
+            mAnimDY = Math.round(mProgress/100 * (getHeight() + mOneWaveHeight)); //if
+        }
+        mWavePath.reset();
+
+        //刚开始时，起始点为X方向往左移动一个波长，Y方向在View的高往下移动半个波峰高度，
+        // 即波浪的升降范围为（-mOneWaveHeight/2 ~ getHeight(()+mOneWaveHeight/2）
+        mWavePath.moveTo(-mOneWaveLength + mAnimDx, (getHeight() + mOneWaveHeight/2) - mAnimDY);
+
         for (int waveLength = 0; waveLength < getWidth() + mOneWaveLength; waveLength += mOneWaveLength) {//画满整个View的宽度（前后各多出一个波长）
             mWavePath.rQuadTo(mOneWaveLength / 4, mOneWaveHeight, mOneWaveLength / 2, 0); //波浪前半个波长
             mWavePath.rQuadTo(mOneWaveLength / 4,  -mOneWaveHeight, mOneWaveLength / 2, 0); //波浪后半个波长
@@ -120,41 +189,75 @@ public class WaveProgress extends View {
         mWavePath.lineTo(getWidth(), getHeight());
         mWavePath.lineTo(0, getHeight());
         mWavePath.close();
-
-        //Clip the canvas into round shape
-        mCirclePath.addCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, Path.Direction.CW);
-        canvas.clipPath(mCirclePath);
-        //Fill the circle
-        canvas.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, mCircleFillPaint);
         //Draw the wave
         canvas.drawPath(mWavePath, mWavePaint);
-        //Stroke the circle
-        canvas.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, mCircleStrokePaint);
-
-        //Start the wave animation
-        startWaveAnim();
-        startProgressAnim();
     }
 
+    /**
+     * Draw the circle stroke
+     */
+    private void drawStroke(Canvas canvas) {
+        //Stroke the circle
+        canvas.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, mCircleStrokePaint);
+    }
+
+    /**
+     * Draw progress text
+     */
+    private void drawText(Canvas canvas) {
+        Paint.FontMetricsInt fontMetrics = mTextPaint.getFontMetricsInt();
+        int baseline = (getMeasuredHeight() - fontMetrics.bottom + fontMetrics.top) / 2 - fontMetrics.top;
+        canvas.drawText(Math.round(mProgress) + "%", getWidth()/2, baseline, mTextPaint);
+    }
+
+    /**
+     * Start wave animation
+     */
+    private void startAnim() {
+        startWaveAnim();
+//        startProgressAnim();
+    }
+
+    /**
+     * Calculate the wave moving speed according to current loading progress
+     * <p><b>Higher progress, lower speed</b>
+     * @return wave moving speed
+     */
+    private int calculateWaveSpeed() {
+        int speed = Math.round(mProgress / 100 * mWaveDuration);
+        if (speed > mWaveDuration) speed = mWaveDuration;
+        else if (speed < 600) speed = 600;
+        return speed;
+    }
+
+    /**
+     * Start moving wave
+     */
     public void startWaveAnim() {
-        if (mWaveAnimator != null && mWaveAnimator.isRunning()) return;
+        if (mWaveAnimator != null && mWaveAnimator.isRunning()) {
+            mWaveAnimator.setDuration(calculateWaveSpeed());
+            return;
+        }
         mWaveAnimator = ValueAnimator.ofInt(0, mOneWaveLength);
-        mWaveAnimator.setDuration(800);
+        mWaveAnimator.setDuration(mWaveDuration);
         mWaveAnimator.setRepeatCount(ValueAnimator.INFINITE);
         mWaveAnimator.setInterpolator(new LinearInterpolator());
         mWaveAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                mAimDx = (int)animation.getAnimatedValue();
+                mAnimDx = (int)animation.getAnimatedValue();
                 postInvalidate();
             }
         });
         mWaveAnimator.start();
     }
 
+    /**
+     * Automatically raise the wave, when the progress is 100%, start form 0% again.
+     */
     public void startProgressAnim() {
         if (mProgressAnimator != null && mProgressAnimator.isRunning()) return;
-        mProgressAnimator = ValueAnimator.ofInt(10, getHeight() + mOneWaveHeight);
+        mProgressAnimator = ValueAnimator.ofInt(0, getHeight() + mOneWaveHeight);
         mProgressAnimator.setDuration(20000);
         mProgressAnimator.setRepeatCount(ValueAnimator.INFINITE);
         mProgressAnimator.setInterpolator(new LinearInterpolator());
@@ -162,8 +265,17 @@ public class WaveProgress extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mAnimDY = (int)animation.getAnimatedValue();
+                mProgress = mAnimDY * 1.0f / (getHeight() + mOneWaveHeight) * 100;
             }
         });
         mProgressAnimator.start();
+    }
+
+    /**
+     * Set loading progress by percent.
+     * @param percent loading progress
+     */
+    public void setProgress(int percent) {
+        mProgress = percent;
     }
 }

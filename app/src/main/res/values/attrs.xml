@@ -5,5 +5,6 @@
         <attr name="fillColor" format="color" />
         <attr name="strokeColor" format="color" />
         <attr name="textColor" format="color" />
+        <attr name="textSize" format="dimension" />
     </declare-styleable>
 </resources>
