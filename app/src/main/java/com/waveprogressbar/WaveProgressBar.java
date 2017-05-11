@@ -1,4 +1,4 @@
-package com.waveprogress;
+package com.waveprogressbar;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -20,7 +20,7 @@ import android.view.animation.LinearInterpolator;
  * @Datetime 2017-05-10 15:00
  */
 
-public class WaveProgress extends View {
+public class WaveProgressBar extends View {
 
     /**The wave path to draw*/
     private Path mWavePath;
@@ -70,18 +70,18 @@ public class WaveProgress extends View {
     private int mTextColor = Color.WHITE;
     private float mTextSize = 40;
 
-    public WaveProgress(Context context) {
+    public WaveProgressBar(Context context) {
         super(context);
         init();
     }
 
-    public WaveProgress(Context context, @Nullable AttributeSet attrs) {
+    public WaveProgressBar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         getAttrs(context, attrs);
         init();
     }
 
-    public WaveProgress(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public WaveProgressBar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         getAttrs(context, attrs);
         init();
@@ -119,15 +119,15 @@ public class WaveProgress extends View {
     }
 
     private void getAttrs(Context context, AttributeSet attrs) {
-        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.WaveProgress);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.WaveProgressBar);
 
-        mWaveColor = ta.getColor(R.styleable.WaveProgress_waveColor, mWaveColor);
-        mFillColor = ta.getColor(R.styleable.WaveProgress_fillColor, mFillColor);
-        mStrokeColor = ta.getColor(R.styleable.WaveProgress_strokeColor, mStrokeColor);
-        mTextColor = ta.getColor(R.styleable.WaveProgress_textColor, mTextColor);
+        mWaveColor = ta.getColor(R.styleable.WaveProgressBar_waveColor, mWaveColor);
+        mFillColor = ta.getColor(R.styleable.WaveProgressBar_fillColor, mFillColor);
+        mStrokeColor = ta.getColor(R.styleable.WaveProgressBar_strokeColor, mStrokeColor);
+        mTextColor = ta.getColor(R.styleable.WaveProgressBar_textColor, mTextColor);
 
         mTextSize = sp2px(context, mTextSize);
-        mTextSize = ta.getDimension(R.styleable.WaveProgress_textSize, mTextSize);
+        mTextSize = ta.getDimension(R.styleable.WaveProgressBar_textSize, mTextSize);
 
         ta.recycle();
     }

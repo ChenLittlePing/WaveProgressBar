@@ -1,4 +1,4 @@
-package com.waveprogress;
+package com.waveprogressbar;
 
 import org.junit.Test;
 

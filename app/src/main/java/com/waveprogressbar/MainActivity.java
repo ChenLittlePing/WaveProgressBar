@@ -1,15 +1,15 @@
-package com.waveprogress;
+package com.waveprogressbar;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
-    private WaveProgress mWave;
+    private WaveProgressBar mWave;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mWave = (WaveProgress) findViewById(R.id.wave);
+        mWave = (WaveProgressBar) findViewById(R.id.wave);
         mWave.setProgress(50);
     }
 }
