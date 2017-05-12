@@ -236,6 +236,16 @@ public class WaveProgressBar extends View {
         }
     }
 
+    /**
+     * Calculate the progress text Y position, when {@link #mIsTextAnim} is true
+     * <p>二阶贝塞尔曲线坐标计算公式：P(t) = (1-t)²P0 + 2t(1-t)P1 + t²P2
+     * <p>其中:
+     * <p>P为曲线上的点，即要计算的点X或者Y
+     * <p>t范围为1-0 (此处转换为P点X与半个波长的比例)
+     * <p>P0为 起始点坐标的X或者Y
+     * <p>P1为 控制点坐标的X或者Y
+     * <p>P0为 结束点坐标的X或者Y
+     */
     private int getTextYPos() {
         int y;
         float t;
@@ -247,10 +257,10 @@ public class WaveProgressBar extends View {
             t = (((getWidth() / 2) % mOneWaveLength) - mAnimDx) * 1.0f / (mOneWaveLength / 2);
         }
         if (t > 0) {
-            y = (int) ((Math.pow((1 - t), 2) * 0) + (2 * t * (1 - t) * (-mOneWaveHeight)) + Math.pow(t, 2) * 0);
+            y = (int) (/*(Math.pow((1 - t), 2) * 0) + */(2 * t * (1 - t) * (-mOneWaveHeight))/* + Math.pow(t, 2) * 0*/); //前后两项Y坐标为0可以不计算
         } else {
             t = 1 + t;
-            y = (int) ((Math.pow((1 - t), 2) * 0) + (2 * t * (1 - t) * mOneWaveHeight) + Math.pow(t, 2) * 0);
+            y = (int) (/*(Math.pow((1 - t), 2) * 0) + */(2 * t * (1 - t) * mOneWaveHeight)/* + Math.pow(t, 2) * 0*/);//前后两项Y坐标为0可以不计算
         }
         return y;
     }
