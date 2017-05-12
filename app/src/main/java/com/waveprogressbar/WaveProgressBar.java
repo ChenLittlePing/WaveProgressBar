@@ -45,10 +45,10 @@ public class WaveProgressBar extends View {
     private Paint mTextPaint;
 
     /**The wave length*/
-    private int mOneWaveLength = 1000;
+    private int mOneWaveLength = 0;
 
     /**The wave height*/
-    private int mOneWaveHeight = 100;
+    private int mOneWaveHeight = 0;
 
     /**The wave's scrolling distance in X direction*/
     private float mAnimDx = 0;
@@ -185,9 +185,13 @@ public class WaveProgressBar extends View {
      * Draw the wave
      */
     private void drawWave(Canvas canvas) {
+        if (mOneWaveLength == 0) mOneWaveLength = getWidth() * 5 / 3; //default wave length
+        if (mOneWaveHeight == 0) mOneWaveHeight = mOneWaveLength / 10; //default wave height
+
         if (mProgressAnimator == null) {
             mAnimDY = Math.round(mProgress/100 * (getHeight() + mOneWaveHeight));
         }
+
         mWavePath.reset();
 
         //刚开始时，起始点为X方向往左移动一个波长，Y方向在View的高往下移动半个波峰高度，
@@ -353,6 +357,20 @@ public class WaveProgressBar extends View {
      */
     public void setProgress(int percent) {
         mProgress = percent;
+    }
+
+    /**
+     * Set the wave length
+     */
+    public void setWaveLength(int length) {
+        mOneWaveLength = length;
+    }
+
+    /**
+     * Set the wave length
+     */
+    public void setWaveHeight(int height) {
+        mOneWaveHeight = height;
     }
 
     /**

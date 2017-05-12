@@ -13,6 +13,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mWave = (WaveProgressBar) findViewById(R.id.wave);
         mWave.setProgress(50);
-        mWave.AnimateText(true, true);
+        mWave.AnimateText(true, false);
     }
 }
