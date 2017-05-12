@@ -1,6 +1,6 @@
 # WaveProgressBar
 A round loading view with dynamic wave
-一个使用Path的二阶贝塞尔曲线画出波浪，并实现动态滚动的Loading控件
+<br>一个使用Path的二阶贝塞尔曲线画出波浪，并实现动态滚动的Loading控件
 
 ![image](https://github.com/ChenLittlePing/WaveProgressBar/blob/master/gif/demo.gif) 
 
