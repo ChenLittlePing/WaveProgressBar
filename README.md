@@ -1,8 +1,10 @@
 # WaveProgressBar
 A round loading view with dynamic wave
-<br> 一个使用Path的二阶贝塞尔曲线画出波浪，并实现动态滚动的Loading控件
+一个使用Path的二阶贝塞尔曲线画出波浪，并实现动态滚动的Loading控件
 
-![image](https://github.com/ChenLittlePing/WaveProgressBar/blob/master/gif/demo.gif)
+![image](https://github.com/ChenLittlePing/WaveProgressBar/blob/master/gif/demo.gif) 
+
+![image](https://github.com/ChenLittlePing/WaveProgressBar/blob/master/gif/demo1.gif)
 
 ## How to use
 #### In XML
@@ -14,11 +16,14 @@ A round loading view with dynamic wave
         android:layout_centerInParent="true"
         app:fillColor="@android:color/holo_red_light"
         app:waveColor="@android:color/holo_green_light"
-        app:strokeColor="@android:color/white"/>
+        app:strokeColor="@android:color/holo_green_light"
+        app:strokeWidth="2dp"
+        app:textSize="20sp"/>
 ```
 
 #### In Activity
 ```java
     mWave = (WaveProgressBar) findViewById(R.id.wave);
     mWave.setProgress(50);
+    //mWave.AnimateText(true, false);
 ```
