@@ -1,5 +1,6 @@
 package com.waveprogressbar;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -59,7 +60,7 @@ public class WaveProgressBar extends View {
     private ValueAnimator mProgressAnimator;
 
     /**Duration to move one wave length*/
-    private int mWaveDuration = 1500;
+    private int mWaveDuration = 2500;
 
     /**Loading progress*/
     private float mProgress = 0;
@@ -68,7 +69,11 @@ public class WaveProgressBar extends View {
     private int mFillColor = Color.WHITE;
     private int mStrokeColor = Color.GREEN;
     private int mTextColor = Color.WHITE;
+    private float mStrokeWidth = 15;
     private float mTextSize = 40;
+    private boolean mIsTextAnim = false;
+    private boolean mStopTextAnimateAtCenter = true;
+    private boolean mIsTextOverMiddle = false;
 
     public WaveProgressBar(Context context) {
         super(context);
@@ -101,7 +106,7 @@ public class WaveProgressBar extends View {
         mCircleStrokePaint = new Paint();
         mCircleStrokePaint.setColor(mStrokeColor);
         mCircleStrokePaint.setStyle(Paint.Style.STROKE);
-        mCircleStrokePaint.setStrokeWidth(15);
+        mCircleStrokePaint.setStrokeWidth(mStrokeWidth);
         mWavePaint.setAntiAlias(true);
 
         //init fill paint
@@ -125,6 +130,7 @@ public class WaveProgressBar extends View {
         mFillColor = ta.getColor(R.styleable.WaveProgressBar_fillColor, mFillColor);
         mStrokeColor = ta.getColor(R.styleable.WaveProgressBar_strokeColor, mStrokeColor);
         mTextColor = ta.getColor(R.styleable.WaveProgressBar_textColor, mTextColor);
+        mStrokeWidth = ta.getDimension(R.styleable.WaveProgressBar_strokeWidth, mStrokeWidth);
 
         mTextSize = sp2px(context, mTextSize);
         mTextSize = ta.getDimension(R.styleable.WaveProgressBar_textSize, mTextSize);
@@ -207,7 +213,36 @@ public class WaveProgressBar extends View {
     private void drawText(Canvas canvas) {
         Paint.FontMetricsInt fontMetrics = mTextPaint.getFontMetricsInt();
         int baseline = (getMeasuredHeight() - fontMetrics.bottom + fontMetrics.top) / 2 - fontMetrics.top;
-        canvas.drawText(Math.round(mProgress) + "%", getWidth()/2, baseline, mTextPaint);
+        if (mIsTextAnim && !mIsTextOverMiddle) {
+            int y = (getHeight() + mOneWaveHeight / 2) - mAnimDY - getTextYPos();
+            if (mStopTextAnimateAtCenter && (getHeight() + mOneWaveHeight/2) - mAnimDY < baseline) {
+                if (Math.abs(y - baseline) < 0.1) {
+                    mIsTextOverMiddle = true;
+                }
+            }
+            canvas.drawText(Math.round(mProgress) + "%", getWidth() / 2, y, mTextPaint);
+        } else {
+            canvas.drawText(Math.round(mProgress) + "%", getWidth()/2, baseline, mTextPaint);
+        }
+    }
+
+    private int getTextYPos() {
+        int y;
+        float t;
+        if ((mAnimDx - (getWidth() / 2) % (mOneWaveLength)) > (mOneWaveLength / 2)) { //位置在半个波长以内，并且移动距离 超过 指定位置大于半个波长
+            t = (mOneWaveLength + (getWidth() / 2)%mOneWaveLength - mAnimDx) * 1.0f / (mOneWaveLength / 2);
+        } else if (((getWidth() / 2) % (mOneWaveLength) - mAnimDx) > (mOneWaveLength / 2)) { //指定位置大于移动距离在半个波长以上
+            t = -((getWidth() / 2) % (mOneWaveLength) - mAnimDx - mOneWaveLength / 2) * 1.0f / (mOneWaveLength / 2);
+        } else { //位置在半个波长以内，并且移动距离 不超过 指定的位置半个波长
+            t = (((getWidth() / 2) % mOneWaveLength) - mAnimDx) * 1.0f / (mOneWaveLength / 2);
+        }
+        if (t > 0) {
+            y = (int) ((Math.pow((1 - t), 2) * 0) + (2 * t * (1 - t) * (-mOneWaveHeight)) + Math.pow(t, 2) * 0);
+        } else {
+            t = 1 + t;
+            y = (int) ((Math.pow((1 - t), 2) * 0) + (2 * t * (1 - t) * mOneWaveHeight) + Math.pow(t, 2) * 0);
+        }
+        return y;
     }
 
     /**
@@ -226,7 +261,7 @@ public class WaveProgressBar extends View {
     private int calculateWaveSpeed() {
         int speed = Math.round(mProgress / 100 * mWaveDuration);
         if (speed > mWaveDuration) speed = mWaveDuration;
-        else if (speed < 600) speed = 600;
+        else if (speed < 1000) speed = 1000;
         return speed;
     }
 
@@ -268,6 +303,27 @@ public class WaveProgressBar extends View {
                 mProgress = mAnimDY * 1.0f / (getHeight() + mOneWaveHeight) * 100;
             }
         });
+        mProgressAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                mIsTextOverMiddle = false;
+            }
+        });
         mProgressAnimator.start();
     }
 
@@ -277,5 +333,15 @@ public class WaveProgressBar extends View {
      */
     public void setProgress(int percent) {
         mProgress = percent;
+    }
+
+    /**
+     * Animate the text by the wave
+     * @param anim true: animate, false:draw in center
+     * @param stopAtMiddle true: stop when text arrive at view center, false: never stop
+     */
+    public void AnimateText(boolean anim, boolean stopAtMiddle) {
+        mIsTextAnim = anim;
+        mStopTextAnimateAtCenter = stopAtMiddle;
     }
 }
