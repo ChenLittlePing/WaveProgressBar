@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
+import android.widget.Scroller;
 
 /**
  * A loading view with wave animation
@@ -22,6 +23,8 @@ import android.view.animation.LinearInterpolator;
  */
 
 public class WaveProgressBar extends View {
+
+    private Context mContext;
 
     /**The wave path to draw*/
     private Path mWavePath;
@@ -48,13 +51,13 @@ public class WaveProgressBar extends View {
     private int mOneWaveHeight = 100;
 
     /**The wave's scrolling distance in X direction*/
-    private int mAnimDx = 0;
+    private float mAnimDx = 0;
 
     /**The wave's scrolling distance in Y direction*/
     private int mAnimDY = 0;
 
-    /**Wave animator*/
-    private ValueAnimator mWaveAnimator;
+    /**Wave animator scroller*/
+    private Scroller mScroller;
 
     /**Progress animator*/
     private ValueAnimator mProgressAnimator;
@@ -77,17 +80,20 @@ public class WaveProgressBar extends View {
 
     public WaveProgressBar(Context context) {
         super(context);
+        mContext = context;
         init();
     }
 
     public WaveProgressBar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         getAttrs(context, attrs);
         init();
     }
 
     public WaveProgressBar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mContext = context;
         getAttrs(context, attrs);
         init();
     }
@@ -180,7 +186,7 @@ public class WaveProgressBar extends View {
      */
     private void drawWave(Canvas canvas) {
         if (mProgressAnimator == null) {
-            mAnimDY = Math.round(mProgress/100 * (getHeight() + mOneWaveHeight)); //if
+            mAnimDY = Math.round(mProgress/100 * (getHeight() + mOneWaveHeight));
         }
         mWavePath.reset();
 
@@ -216,7 +222,7 @@ public class WaveProgressBar extends View {
         if (mIsTextAnim && !mIsTextOverMiddle) {
             int y = (getHeight() + mOneWaveHeight / 2) - mAnimDY - getTextYPos();
             if (mStopTextAnimateAtCenter && (getHeight() + mOneWaveHeight/2) - mAnimDY < baseline) {
-                if (Math.abs(y - baseline) < 0.1) {
+                if (Math.abs(y - baseline) < 3) { //stop at center
                     mIsTextOverMiddle = true;
                 }
             }
@@ -268,23 +274,37 @@ public class WaveProgressBar extends View {
     /**
      * Start moving wave
      */
-    public void startWaveAnim() {
-        if (mWaveAnimator != null && mWaveAnimator.isRunning()) {
-            mWaveAnimator.setDuration(calculateWaveSpeed());
-            return;
+    private void startWaveAnim() {
+        if (mScroller == null) {
+            mScroller = new Scroller(mContext, new LinearInterpolator());
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    performWaveAnim();
+                }
+            }, 400);
+        } else {
+            performWaveAnim();
         }
-        mWaveAnimator = ValueAnimator.ofInt(0, mOneWaveLength);
-        mWaveAnimator.setDuration(mWaveDuration);
-        mWaveAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        mWaveAnimator.setInterpolator(new LinearInterpolator());
-        mWaveAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                mAnimDx = (int)animation.getAnimatedValue();
-                postInvalidate();
-            }
-        });
-        mWaveAnimator.start();
+    }
+
+    /**
+     * Perform the wave animation
+     */
+    private void performWaveAnim() {
+        if (mScroller != null && mScroller.isFinished()) {
+            mScroller.startScroll(0, 0, mOneWaveLength, 0, calculateWaveSpeed());
+            postInvalidate();
+        }
+    }
+
+    @Override
+    public void computeScroll() {
+        if (mScroller != null && mScroller.computeScrollOffset() && !mScroller.isFinished()) {
+            mAnimDx = mScroller.getCurrX();
+            postInvalidate();
+        }
+        super.computeScroll();
     }
 
     /**
